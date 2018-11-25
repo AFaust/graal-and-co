@@ -1,0 +1,2 @@
+# About
+This sub-module defines the public APIs for any Truffle-based instrumentations provided by projects in this repository. The resulting API JAR has to be placed on the GraalVM boot classpath (&lt;root&gt;/jre/lib/boot) in order to be accessible to both the actual application using GraalVM / Truffle-based languages, as well as the implementation of the instrumentations on the partially isolated Truffle classpath.

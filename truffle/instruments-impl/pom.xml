@@ -1,0 +1,79 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>de.axelfaust.graal.truffle</groupId>
+        <artifactId>de.axelfaust.graal.truffle.parent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>de.axelfaust.graal.truffle.instruments.impl</artifactId>
+
+    <name>Truffle Instruments</name>
+    <description>Instruments for Truffle-based polyglot runtimes</description>
+
+    <properties>
+        <!-- have to put the API JAR on boot classpath to be accessible for both Truffle and actual application -->
+        <docker.test.prepareCmd>mv /maven/lib/de.axelfaust.graal.truffle.instruments.api-${project.version}.jar \
+             /usr/lib/jvm/graalvm-ce-${dep.graalvm.version}/jre/lib/boot/</docker.test.prepareCmd>
+        <docker.test.runCmd>java -cp /maven/test-classes/:/maven/lib/*:/maven/test-lib/* -Dtruffle.class.path.append=/maven/classes/ \
+            org.junit.runner.JUnitCore de.axelfaust.graal.truffle.instruments.GraalVMTestSuite</docker.test.runCmd>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>de.axelfaust.graal.truffle</groupId>
+            <artifactId>de.axelfaust.graal.truffle.instruments.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.graalvm.truffle</groupId>
+            <artifactId>truffle-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.graalvm.truffle</groupId>
+            <artifactId>truffle-dsl-processor</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessors>
+                        <!-- TODO Add additional processors if necessary -->
+                        <annotationProcessor>com.oracle.truffle.dsl.processor.InstrumentRegistrationProcessor</annotationProcessor>
+                    </annotationProcessors>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludedGroups>de.axelfaust.graal.truffle.instruments.RequiresGraalVM</excludedGroups>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

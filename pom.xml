@@ -1,0 +1,221 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>de.axelfaust.graal</groupId>
+    <artifactId>de.axelfaust.graal.parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>GraalVM Playground Parent</name>
+    <description>Collection of Graal-related playground projects</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <dep.slf4j.version>1.7.25</dep.slf4j.version>
+        <dep.logback.version>1.2.3</dep.logback.version>
+        <dep.graalvm.version>1.0.0-rc9</dep.graalvm.version>
+
+        <fabric8io.docker.version>0.26.1</fabric8io.docker.version>
+
+        <docker.test.prepareCmd></docker.test.prepareCmd>
+        <docker.test.runCmd>none</docker.test.runCmd>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${dep.slf4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.graalvm.sdk</groupId>
+                <artifactId>graal-sdk</artifactId>
+                <version>${dep.graalvm.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.graalvm.truffle</groupId>
+                <artifactId>truffle-api</artifactId>
+                <version>${dep.graalvm.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.graalvm.truffle</groupId>
+                <artifactId>truffle-dsl-processor</artifactId>
+                <version>${dep.graalvm.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.graalvm.js</groupId>
+                <artifactId>js</artifactId>
+                <version>${dep.graalvm.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${dep.logback.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>${fabric8io.docker.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+
+    <profiles>
+        <profile>
+            <id>runTestsInDockerGraalVM</id>
+            <activation>
+                <property>
+                    <name>docker.test.cmd</name>
+                    <value>!none</value>
+                </property>
+            </activation>
+
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>io.fabric8</groupId>
+                            <artifactId>docker-maven-plugin</artifactId>
+
+                            <executions>
+                                <execution>
+                                    <id>run-unit-tests-on-graalvm</id>
+                                    <phase>test</phase>
+                                    <goals>
+                                        <goal>build</goal>
+                                        <goal>remove</goal>
+                                    </goals>
+                                    <configuration>
+                                        <images>
+                                            <image>
+                                                <name>${project.artifactId}-test-image</name>
+                                                <build>
+                                                    <from>acosix/baseimage-graalvm:latest</from>
+                                                    <assembly>
+                                                        <inline>
+                                                            <dependencySets>
+                                                                <dependencySet>
+                                                                    <includes>
+                                                                        <include>*</include>
+                                                                    </includes>
+                                                                    <excludes>
+                                                                        <exclude>org.graalvm:*</exclude>
+                                                                        <exclude>org.graalvm.*:*</exclude>
+                                                                        <exclude>org.ow2.asm:*</exclude>
+                                                                        <exclude>com.ibm.icu:*</exclude>
+                                                                    </excludes>
+                                                                    <scope>test</scope>
+                                                                    <outputDirectory>test-lib</outputDirectory>
+                                                                    <useProjectArtifact>false</useProjectArtifact>
+                                                                </dependencySet>
+                                                                <dependencySet>
+                                                                    <includes>
+                                                                        <include>*</include>
+                                                                    </includes>
+                                                                    <excludes>
+                                                                        <exclude>org.graalvm:*</exclude>
+                                                                        <exclude>org.graalvm.*:*</exclude>
+                                                                        <exclude>org.ow2.asm:*</exclude>
+                                                                        <exclude>com.ibm.icu:*</exclude>
+                                                                    </excludes>
+                                                                    <scope>compile</scope>
+                                                                    <outputDirectory>lib</outputDirectory>
+                                                                    <useProjectArtifact>false</useProjectArtifact>
+                                                                </dependencySet>
+                                                            </dependencySets>
+                                                            <fileSets>
+                                                                <fileSet>
+                                                                    <directory>${project.basedir}/target/classes</directory>
+                                                                    <outputDirectory>classes</outputDirectory>
+                                                                </fileSet>
+                                                                <fileSet>
+                                                                    <directory>${project.basedir}/target/test-classes</directory>
+                                                                    <outputDirectory>test-classes</outputDirectory>
+                                                                </fileSet>
+                                                            </fileSets>
+                                                        </inline>
+                                                    </assembly>
+                                                    <runCmds>
+                                                        <run>${docker.test.prepareCmd}</run>
+                                                        <run>${docker.test.runCmd}</run>
+                                                    </runCmds>
+                                                </build>
+                                            </image>
+                                        </images>
+                                        <verbose>true</verbose>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
+
+    <modules>
+      <module>truffle</module>
+    </modules>
+</project>
